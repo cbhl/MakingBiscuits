@@ -4,6 +4,8 @@ A [Content Patcher](https://stardewvalleywiki.com/Modding:Content_Patcher) conte
 
 This is a `visual` content pack -- it should be compatible with multiplayer but the color changes will only be visitble to players who have the content pack installed. See https://github.com/Pathoschild/StardewMods/tree/stable/ContentPatcher#multiplayer.
 
+![screenshot of cats in the mod](screenshot2.png)
+
 ## Requirements
 
 - [Stardew Valley](https://www.stardewvalley.net/)
