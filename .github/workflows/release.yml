@@ -55,16 +55,20 @@ jobs:
           tag_name: "v${{ inputs.version }}"
           name: "v${{ inputs.version }}"
           body: |
-            ## Installation
-
-            1. Install the prerequisites: Stardew Valley, SMAPI, and Content Patcher.
-            2. Unzip Making Biscuits into your `Stardew Valley/Mods` folder, so you end up with `Mods/[CP] MakingBiscuits`.
-            3. Launch the game through SMAPI (double-click `StardewModdingAPI.exe` in your `Stardew Valley` folder).
-
-            SMAPI and Content Patcher are from the below sources, and the vendored binaries are provided here for your convenience.
-            - [SMAPI](https://smapi.io/)
-            - [Content Patcher](https://www.nexusmods.com/stardewvalley/mods/1915)
-
+            Happy birf! Here is a smol cat content pack for you:
+            
+            <img width="638" height="359" alt="screenshot2" src="https://github.com/user-attachments/assets/3d567c39-3ea1-4860-889d-67640ba6c8a1" />
+            
+            ## Quick Start
+            
+            Vendored binaries for SMAPI and Content Patcher are included here for convenience; the paranoid should probably check hashes against upstream (or get them from upstream).
+            
+            1. Run the Stardew Valley game without SMAPI at least once (so it can do first-time setup).
+            2. If you don't already have it, install the SMAPI (extract the `.zip` file somewhere and double-click `install on Windows.bat`).
+              - After this is done you should have a `Mods` folder in your `Stardew Valley` folder with the default SMAPI mods (`ConsoleCommands` and `SaveBackup`). For most users this will be in `"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods"`.
+            3. Unzip Content Patcher into your `Stardew Valley/Mods` folder, so you end up with `Mods/Content Patcher`.
+            4. Unzip Making Biscuits into your `Stardew Valley/Mods` folder, so you end up with `Mods/[CP] MakingBiscuits`.
+            5. Launch the game through SMAPI (double-click `Stardew Valley/StardewModdingAPI.exe`, or use the launcher entry you configured when installing SMAPI).
           generate_release_notes: true
           files: |
             MakingBiscuits-${{ inputs.version }}.zip
