@@ -1,7 +1,7 @@
 {
     "Name": "Making Biscuits",
     "Author": "cbhl",
-    "Version": "0.0.0-alpha",
+    "Version": "0.0.1-alpha",
     "Description": "Content Patcher content pack that recolors some cats.",
     "UniqueID": "cbhl.CPMakingBiscuits",
     "UpdateKeys": [ "GitHub:cbhl/MakingBiscuits" ],
