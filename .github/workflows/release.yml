@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate version input
         run: |
@@ -50,7 +50,7 @@ jobs:
           zip -r "MakingBiscuits-${{ inputs.version }}.zip" "[CP] MakingBiscuits" -x "*.gitkeep"
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "v${{ inputs.version }}"
           name: "v${{ inputs.version }}"
