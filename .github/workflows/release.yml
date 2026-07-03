@@ -54,6 +54,17 @@ jobs:
         with:
           tag_name: "v${{ inputs.version }}"
           name: "v${{ inputs.version }}"
+          body: |
+            ## Installation
+
+            1. Install the prerequisites: Stardew Valley, SMAPI, and Content Patcher.
+            2. Unzip Making Biscuits into your `Stardew Valley/Mods` folder, so you end up with `Mods/[CP] MakingBiscuits`.
+            3. Launch the game through SMAPI (double-click `StardewModdingAPI.exe` in your `Stardew Valley` folder).
+
+            SMAPI and Content Patcher are from the below sources, and the vendored binaries are provided here for your convenience.
+            - [SMAPI](https://smapi.io/)
+            - [Content Patcher](https://www.nexusmods.com/stardewvalley/mods/1915)
+
           generate_release_notes: true
           files: |
             MakingBiscuits-${{ inputs.version }}.zip
