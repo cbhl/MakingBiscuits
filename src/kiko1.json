@@ -1,0 +1,174 @@
+{
+  "name": "Edit Preset",
+  "created": "2026-07-03T17:07:17.460Z",
+  "version": 4,
+  "edits": [
+    {
+      "type": "swap",
+      "swap": {
+        "from": {
+          "r": 59,
+          "g": 43,
+          "b": 38,
+          "hex": "#3b2b26"
+        },
+        "to": {
+          "r": 64,
+          "g": 51,
+          "b": 64,
+          "hex": "#403340"
+        },
+        "hasSelection": false
+      }
+    },
+    {
+      "type": "swap",
+      "swap": {
+        "from": {
+          "r": 196,
+          "g": 109,
+          "b": 134,
+          "hex": "#c46d86"
+        },
+        "to": {
+          "r": 186,
+          "g": 158,
+          "b": 177,
+          "hex": "#ba9eb1"
+        },
+        "hasSelection": false
+      }
+    },
+    {
+      "type": "swap",
+      "swap": {
+        "from": {
+          "r": 216,
+          "g": 209,
+          "b": 182,
+          "hex": "#d8d1b6"
+        },
+        "to": {
+          "r": 234,
+          "g": 235,
+          "b": 244,
+          "hex": "#eaebf4"
+        },
+        "hasSelection": false
+      }
+    },
+    {
+      "type": "swap",
+      "swap": {
+        "from": {
+          "r": 93,
+          "g": 81,
+          "b": 70,
+          "hex": "#5d5146"
+        },
+        "to": {
+          "r": 118,
+          "g": 114,
+          "b": 124,
+          "hex": "#76727c"
+        },
+        "hasSelection": false
+      }
+    },
+    {
+      "type": "swap",
+      "swap": {
+        "from": {
+          "r": 128,
+          "g": 114,
+          "b": 103,
+          "hex": "#807267"
+        },
+        "to": {
+          "r": 170,
+          "g": 160,
+          "b": 172,
+          "hex": "#aaa0ac"
+        },
+        "hasSelection": false
+      }
+    }
+  ],
+  "swaps": [
+    {
+      "from": {
+        "r": 59,
+        "g": 43,
+        "b": 38,
+        "hex": "#3b2b26"
+      },
+      "to": {
+        "r": 64,
+        "g": 51,
+        "b": 64,
+        "hex": "#403340"
+      },
+      "hasSelection": false
+    },
+    {
+      "from": {
+        "r": 196,
+        "g": 109,
+        "b": 134,
+        "hex": "#c46d86"
+      },
+      "to": {
+        "r": 186,
+        "g": 158,
+        "b": 177,
+        "hex": "#ba9eb1"
+      },
+      "hasSelection": false
+    },
+    {
+      "from": {
+        "r": 216,
+        "g": 209,
+        "b": 182,
+        "hex": "#d8d1b6"
+      },
+      "to": {
+        "r": 234,
+        "g": 235,
+        "b": 244,
+        "hex": "#eaebf4"
+      },
+      "hasSelection": false
+    },
+    {
+      "from": {
+        "r": 93,
+        "g": 81,
+        "b": 70,
+        "hex": "#5d5146"
+      },
+      "to": {
+        "r": 118,
+        "g": 114,
+        "b": 124,
+        "hex": "#76727c"
+      },
+      "hasSelection": false
+    },
+    {
+      "from": {
+        "r": 128,
+        "g": 114,
+        "b": 103,
+        "hex": "#807267"
+      },
+      "to": {
+        "r": 170,
+        "g": 160,
+        "b": 172,
+        "hex": "#aaa0ac"
+      },
+      "hasSelection": false
+    }
+  ]
+}

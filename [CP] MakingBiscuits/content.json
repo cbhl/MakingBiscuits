@@ -1,5 +1,41 @@
 {
     "Format": "2.9.0",
     "Changes": [
+        {
+            "Action": "Load",
+            "Target": "Animals/cat",
+            "FromFile": "assets/kiko.png"
+        },
+        {
+            "Action": "Load",
+            "Target": "Animals/cat1",
+            "FromFile": "assets/aery.png"
+        },
+        {
+            "Action": "Load",
+            "Target": "Animals/cat2",
+            "FromFile": "assets/kiko.png"
+        },
+        {
+            "Action": "EditImage",
+            "Target": "LooseSprites/Cursors",
+            "FromFile": "assets/cursor-kiko.png",
+            "FromArea":  { "X": 0, "Y": 0, "Width": 16, "Height": 16 },
+            "ToArea": { "X": 160, "Y": 208, "Width": 16, "Height": 16 }
+        },
+        {
+            "Action": "EditImage",
+            "Target": "LooseSprites/Cursors",
+            "FromFile": "assets/cursor-aery.png",
+            "FromArea":  { "X": 0, "Y": 0, "Width": 16, "Height": 16 },
+            "ToArea": { "X": 176, "Y": 208, "Width": 16, "Height": 16 }
+        },
+        {
+            "Action": "EditImage",
+            "Target": "LooseSprites/Cursors",
+            "FromFile": "assets/cursor-kiko.png",
+            "FromArea":  { "X": 0, "Y": 0, "Width": 16, "Height": 16 },
+            "ToArea": { "X": 192, "Y": 208, "Width": 16, "Height": 16 }
+        }
     ]
 }
