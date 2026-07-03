@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.0.0 or 0.1.0-alpha.1), no leading "v"'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate version input
+        run: |
+          version="${{ inputs.version }}"
+          if [[ "$version" == v* ]]; then
+            echo "::error::Version should not have a leading 'v' (got '$version')" >&2
+            exit 1
+          fi
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Version '$version' is not a valid semver string" >&2
+            exit 1
+          fi
+
+      - name: Update manifest.json version
+        run: |
+          sed -i "s/\"Version\": \"[^\"]*\"/\"Version\": \"${{ inputs.version }}\"/" "[CP] MakingBiscuits/manifest.json"
+          grep '"Version"' "[CP] MakingBiscuits/manifest.json"
+
+      - name: Commit version bump and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "[CP] MakingBiscuits/manifest.json"
+          git commit -m "Release v${{ inputs.version }}"
+          git tag "v${{ inputs.version }}"
+          git push origin HEAD:main
+          git push origin "v${{ inputs.version }}"
+
+      - name: Build release zip
+        run: |
+          zip -r "MakingBiscuits-${{ inputs.version }}.zip" "[CP] MakingBiscuits" -x "*.gitkeep"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ inputs.version }}"
+          name: "v${{ inputs.version }}"
+          generate_release_notes: true
+          files: "MakingBiscuits-${{ inputs.version }}.zip"
