@@ -1,0 +1,30 @@
+Make a static web page in `src/preview.html` that allows me to preview the cat (animal) sprite sheets for stardew valley in `[CP] MakingBiscuits/assets/` called aery and kiko. Use the cursor-aery and cursor-kiko images in the drop-down selector for the assets aery and kiko respectively.
+
+We should have a reusable component that can either statically preview a specific frame from the 128x256 sprite sheet that is 4 sprites wide and 8 sprites tall (32x32 cells). Frame layout:
+
+- Rows 0–3: walking down, right, up, and left respectively (4 frames each).
+- Row 4: sitting (4 frames).
+- Row 5: licking paw (4 frames).
+- Row 6: lie / fall (4 frames); the last two cells of row 7 (sleeping row) are also part of the lie/fall animation.
+- Row 7: sleeping uses only the first two frames; frames 3–4 of this row belong to lie/fall.
+
+The component should be able to display a specific frame, or loop through the frames for a specific animation/state, for a given sprite sheet.
+
+All animal-sprite instances on the page (walk-around cat, animation previews, and static frames) should render at **4×** scale (128×128px cell). The cursor icon in the static frames section should also display at 4× (64×64px) and use vertical margins that keep it level with the 32×4 animal cells: 2/3 of leftover height on top, 1/3 on bottom — e.g. `margin-top: calc((32px * 4 - 16px * 4) * 2 / 3)` and `margin-bottom: calc((32px * 4 - 16px * 4) / 3)`.
+
+The page should have:
+
+1. **Walk around** — a wrapper around the animal component that reacts to keyboard input (arrow keys / WASD) so the cat walks around on a playfield. Keys must keep driving direction and walk animation while held, and recover correctly after release (do not use the HTML `dir` property for facing — it collides with `HTMLElement.dir`).
+
+2. **Animations** — looping previews for every animation state (walk ×4, sit, lick, lie/fall, sleep).
+
+3. **Static frames** — first frame of each walk direction, last frame of sit, and the current cat’s cursor icon.
+
+**Look & theme (Stardew Valley):**
+
+- Page background `#ecac22` (farm dirt). The page itself does **not** have a grid background.
+- The walk-around playfield keeps a 32px grid over the same dirt color.
+- UI chrome should feel Stardew-like: parchment panels, wood-brown borders, earthy brown text, crop-green selected state.
+- Animation and static frame tiles should be transparent (sprites sit directly on the dirt), not opaque cards.
+
+Also write a copy of this prompt to `src/preview-prompt.txt`.
