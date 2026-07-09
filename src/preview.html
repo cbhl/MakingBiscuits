@@ -6,7 +6,6 @@
   <title>Making Biscuits — Cat Sprite Preview</title>
   <style>
     :root {
-      /* Farm dirt + Stardew parchment/wood UI */
       --bg: #ecac22;
       --panel: #f4e4bc;
       --panel-deep: #e8d4a0;
@@ -15,9 +14,7 @@
       --text: #3b2410;
       --muted: #7a5a35;
       --accent: #3f7a1f;
-      --accent-hot: #c45c1a;
       --wood: #8b5a2b;
-      --scale: 3;
       --grid-line: rgba(107, 68, 35, 0.22);
     }
 
@@ -139,20 +136,15 @@
       box-shadow: none;
     }
 
-    .card animal-sprite {
-      --scale: 4;
-    }
-
     .card .label {
       font-size: 0.75rem;
       font-weight: 600;
       color: var(--muted);
     }
 
-    .card .cursor-icon {
+    .cursor-icon {
       width: calc(16px * 4);
       height: calc(16px * 4);
-      /* Match animal cells (32×4): 2/3 top, 1/3 bottom of the leftover height */
       margin-top: calc((32px * 4 - 16px * 4) * 2 / 3);
       margin-bottom: calc((32px * 4 - 16px * 4) / 3);
       image-rendering: pixelated;
@@ -192,68 +184,30 @@
       z-index: 1;
     }
 
-    animal-sprite {
+    .animal-sprite {
       display: inline-block;
-      width: calc(32px * var(--scale));
-      height: calc(32px * var(--scale));
       background-repeat: no-repeat;
-      background-size: calc(128px * var(--scale)) calc(256px * var(--scale));
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
 
-    walkable-cat {
+    .walkable-cat {
       position: absolute;
       left: 0;
       top: 0;
       will-change: transform;
       pointer-events: none;
     }
-
-    walkable-cat animal-sprite {
-      --scale: 4;
-    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Making Biscuits — Cat Preview</h1>
-    <div class="selector">
-      <label>Cat</label>
-      <div class="cat-select" id="cat-select" role="listbox" aria-label="Select cat">
-        <button type="button" data-cat="aery" class="active" role="option" aria-selected="true">
-          <img src="../[CP] MakingBiscuits/assets/cursor-aery.png" alt="" width="16" height="16" />
-          aery
-        </button>
-        <button type="button" data-cat="kiko" role="option" aria-selected="false">
-          <img src="../[CP] MakingBiscuits/assets/cursor-kiko.png" alt="" width="16" height="16" />
-          kiko
-        </button>
-      </div>
-    </div>
-  </header>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.9/babel.min.js"></script>
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-  <main>
-    <section>
-      <h2>Walk around</h2>
-      <div class="playfield" id="playfield" tabindex="0">
-        <div class="hint">Click here, then Arrow keys or WASD to walk</div>
-        <walkable-cat id="walker" sheet="../[CP] MakingBiscuits/assets/aery.png"></walkable-cat>
-      </div>
-    </section>
-
-    <section>
-      <h2>Animations</h2>
-      <div class="grid" id="anim-grid"></div>
-    </section>
-
-    <section>
-      <h2>Static frames</h2>
-      <div class="grid" id="static-grid"></div>
-    </section>
-  </main>
-
-  <script>
     const ASSETS = {
       aery: {
         sheet: "../[CP] MakingBiscuits/assets/aery.png",
@@ -265,12 +219,11 @@
       },
     };
 
-    /** Stardew animal sheet: 128×256, 4×8 grid of 32×32 frames */
     const COLS = 4;
     const ROWS = 8;
     const FRAME = 32;
+    const SCALE = 4;
 
-    /** Absolute frame indices (row * 4 + col) for each animation */
     const STATES = {
       walkDown:  { frames: [0, 1, 2, 3],             label: "Walk down" },
       walkRight: { frames: [4, 5, 6, 7],             label: "Walk right" },
@@ -278,189 +231,9 @@
       walkLeft:  { frames: [12, 13, 14, 15],         label: "Walk left" },
       sit:       { frames: [16, 17, 18, 19],         label: "Sit" },
       lick:      { frames: [20, 21, 22, 23],         label: "Lick paw" },
-      // row 6 all four, plus last two of row 7
       lie:       { frames: [24, 25, 26, 27, 30, 31], label: "Lie / fall" },
-      // first two of row 7
       sleep:     { frames: [28, 29],                 label: "Sleep" },
     };
-
-    function cellOf(index) {
-      return { col: index % COLS, row: Math.floor(index / COLS) };
-    }
-
-    class AnimalSprite extends HTMLElement {
-      static get observedAttributes() {
-        return ["sheet", "state", "frame", "loop", "fps"];
-      }
-
-      constructor() {
-        super();
-        this._timer = null;
-        this._index = 0;
-        this._seq = [0];
-        this._mode = "frame"; // "frame" | "state"
-        this._animating = false;
-      }
-
-      connectedCallback() {
-        this._readAttrs();
-        this._layout();
-        this._paint();
-        this._syncLoop();
-      }
-
-      disconnectedCallback() {
-        this._stopLoop();
-      }
-
-      attributeChangedCallback(name) {
-        if (name === "sheet") {
-          this._layout();
-          return;
-        }
-        // Imperative playState/showFrame own the display; ignore attr churn from those paths
-        if (this._imperative) return;
-        this._readAttrs();
-        this._paint();
-        this._syncLoop();
-      }
-
-      get sheet() { return this.getAttribute("sheet") || ""; }
-      set sheet(v) { this.setAttribute("sheet", v); }
-
-      get state() { return this.getAttribute("state") || ""; }
-      set state(v) {
-        if (v) this.setAttribute("state", v);
-        else this.removeAttribute("state");
-      }
-
-      get frame() {
-        const f = this.getAttribute("frame");
-        return f == null ? null : Number(f);
-      }
-      set frame(v) {
-        if (v == null || v === "") this.removeAttribute("frame");
-        else this.setAttribute("frame", String(v));
-      }
-
-      get loop() {
-        return this.hasAttribute("loop") && this.getAttribute("loop") !== "false";
-      }
-      set loop(v) {
-        if (v) this.setAttribute("loop", "");
-        else this.removeAttribute("loop");
-      }
-
-      get fps() {
-        const n = Number(this.getAttribute("fps"));
-        return Number.isFinite(n) && n > 0 ? n : 6;
-      }
-      set fps(v) { this.setAttribute("fps", String(v)); }
-
-      /** Show one absolute frame (0..31). Stops any loop. */
-      showFrame(index) {
-        this._imperative = true;
-        this._stopLoop();
-        this._mode = "frame";
-        this._seq = [index];
-        this._index = 0;
-        this._animating = false;
-        this.removeAttribute("state");
-        this.removeAttribute("loop");
-        this.setAttribute("frame", String(index));
-        this._layout();
-        this._paint();
-        this._imperative = false;
-      }
-
-      /**
-       * Play a named state. If loop is true, cycle frames; else show first frame.
-       * Prefer this over setting attributes for runtime control (e.g. walker).
-       */
-      playState(name, { loop = true, fps = 6 } = {}) {
-        const def = STATES[name];
-        if (!def) return;
-        this._imperative = true;
-        this._mode = "state";
-        this._seq = def.frames.slice();
-        this._index = 0;
-        this._animating = !!loop;
-        this.removeAttribute("frame");
-        this.setAttribute("state", name);
-        this.setAttribute("fps", String(fps));
-        if (loop) this.setAttribute("loop", "");
-        else this.removeAttribute("loop");
-        this._layout();
-        this._paint();
-        this._syncLoop();
-        this._imperative = false;
-      }
-
-      _readAttrs() {
-        const absolute = this.frame;
-        if (absolute != null && !Number.isNaN(absolute) && !this.loop) {
-          this._mode = "frame";
-          this._seq = [absolute];
-          this._index = 0;
-          this._animating = false;
-          return;
-        }
-        const def = STATES[this.state];
-        if (def) {
-          this._mode = "state";
-          this._seq = def.frames.slice();
-          if (this._index >= this._seq.length) this._index = 0;
-          this._animating = this.loop && this._seq.length > 1;
-        }
-      }
-
-      _scale() {
-        const raw = getComputedStyle(this).getPropertyValue("--scale").trim();
-        const n = Number(raw);
-        return Number.isFinite(n) && n > 0 ? n : 3;
-      }
-
-      _layout() {
-        if (this.sheet) {
-          this.style.backgroundImage = `url("${this.sheet}")`;
-        }
-        const scale = this._scale();
-        this.style.width = `${FRAME * scale}px`;
-        this.style.height = `${FRAME * scale}px`;
-        this.style.backgroundSize =
-          `${COLS * FRAME * scale}px ${ROWS * FRAME * scale}px`;
-      }
-
-      _currentAbsolute() {
-        return this._seq[this._index] ?? 0;
-      }
-
-      _paint() {
-        const scale = this._scale();
-        const { col, row } = cellOf(this._currentAbsolute());
-        this.style.backgroundPosition =
-          `${-(col * FRAME * scale)}px ${-(row * FRAME * scale)}px`;
-      }
-
-      _syncLoop() {
-        this._stopLoop();
-        if (!this._animating || this._seq.length < 2) return;
-        const ms = 1000 / this.fps;
-        this._timer = setInterval(() => {
-          this._index = (this._index + 1) % this._seq.length;
-          this._paint();
-        }, ms);
-      }
-
-      _stopLoop() {
-        if (this._timer != null) {
-          clearInterval(this._timer);
-          this._timer = null;
-        }
-      }
-    }
-
-    customElements.define("animal-sprite", AnimalSprite);
 
     const KEY_DIRS = {
       ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
@@ -474,175 +247,184 @@
       right: "walkRight",
     };
 
-    class WalkableCat extends HTMLElement {
-      constructor() {
-        super();
-        this.x = 120;
-        this.y = 100;
-        this.facing = "down";
-        this.moving = false;
-        this.keys = new Set();
-        this._sprite = null;
-        this._raf = 0;
-        this.speed = 1.4;
-      }
+    function cellOf(index) {
+      return { col: index % COLS, row: Math.floor(index / COLS) };
+    }
 
-      static get observedAttributes() {
-        return ["sheet"];
-      }
+    function spriteStyle(sheet, absoluteFrame, scale = SCALE) {
+      const { col, row } = cellOf(absoluteFrame);
+      return {
+        width: FRAME * scale,
+        height: FRAME * scale,
+        backgroundImage: `url("${sheet}")`,
+        backgroundSize: `${COLS * FRAME * scale}px ${ROWS * FRAME * scale}px`,
+        backgroundPosition: `${-(col * FRAME * scale)}px ${-(row * FRAME * scale)}px`,
+      };
+    }
 
-      connectedCallback() {
-        if (!this._sprite) {
-          this._sprite = document.createElement("animal-sprite");
-          this.appendChild(this._sprite);
-        }
-        this._applySheet();
-        this._sprite.showFrame(STATES.walkDown.frames[0]);
-        this._place();
+    /** Reusable: static frame or looping animation state from a sprite sheet. */
+    function AnimalSprite({ sheet, frame, state, loop = false, fps = 6, scale = SCALE, className = "" }) {
+      const seq = useMemo(() => {
+        if (frame != null && !loop) return [frame];
+        const def = STATES[state];
+        if (def) return def.frames;
+        if (frame != null) return [frame];
+        return [0];
+      }, [frame, state, loop]);
 
-        this._onKeyDown = (e) => this._onKey(e, true);
-        this._onKeyUp = (e) => this._onKey(e, false);
-        this._onBlur = () => {
-          this.keys.clear();
-        };
-        window.addEventListener("keydown", this._onKeyDown);
-        window.addEventListener("keyup", this._onKeyUp);
-        window.addEventListener("blur", this._onBlur);
+      const animating = loop && seq.length > 1;
+      const [index, setIndex] = useState(0);
 
-        const tick = () => {
-          this._step();
-          this._raf = requestAnimationFrame(tick);
-        };
-        this._raf = requestAnimationFrame(tick);
-      }
+      useEffect(() => {
+        setIndex(0);
+      }, [sheet, state, frame, loop, seq]);
 
-      disconnectedCallback() {
-        window.removeEventListener("keydown", this._onKeyDown);
-        window.removeEventListener("keyup", this._onKeyUp);
-        window.removeEventListener("blur", this._onBlur);
-        cancelAnimationFrame(this._raf);
-      }
+      useEffect(() => {
+        if (!animating) return undefined;
+        const ms = 1000 / fps;
+        const id = setInterval(() => {
+          setIndex((i) => (i + 1) % seq.length);
+        }, ms);
+        return () => clearInterval(id);
+      }, [animating, fps, seq]);
 
-      attributeChangedCallback(name) {
-        if (name === "sheet") this._applySheet();
-      }
+      const absolute = seq[index % seq.length] ?? 0;
 
-      get sheet() { return this.getAttribute("sheet") || ""; }
-      set sheet(v) { this.setAttribute("sheet", v); }
+      return (
+        <div
+          className={`animal-sprite ${className}`.trim()}
+          style={spriteStyle(sheet, absolute, scale)}
+          role="img"
+          aria-label={state || `frame ${absolute}`}
+        />
+      );
+    }
 
-      _applySheet() {
-        if (this._sprite && this.sheet) this._sprite.sheet = this.sheet;
-      }
+    function WalkableCat({ sheet }) {
+      const fieldRef = useRef(null);
+      const keysRef = useRef(new Set());
+      const posRef = useRef({ x: 120, y: 100 });
+      const facingRef = useRef("down");
+      const movingRef = useRef(false);
+      const activeStateRef = useRef(null);
+      const [pos, setPos] = useState({ x: 120, y: 100 });
+      const [display, setDisplay] = useState({
+        mode: "frame",
+        state: null,
+        frame: STATES.walkDown.frames[0],
+      });
 
-      _onKey(e, down) {
+      const onKey = useCallback((e, down) => {
         const dir = KEY_DIRS[e.code];
         if (!dir) return;
         e.preventDefault();
         if (e.repeat) return;
-        if (down) this.keys.add(dir);
-        else this.keys.delete(dir);
-      }
+        if (down) keysRef.current.add(dir);
+        else keysRef.current.delete(dir);
+      }, []);
 
-      _step() {
-        let dx = 0;
-        let dy = 0;
-        if (this.keys.has("up")) dy -= 1;
-        if (this.keys.has("down")) dy += 1;
-        if (this.keys.has("left")) dx -= 1;
-        if (this.keys.has("right")) dx += 1;
+      useEffect(() => {
+        const onDown = (e) => onKey(e, true);
+        const onUp = (e) => onKey(e, false);
+        const onBlur = () => keysRef.current.clear();
+        window.addEventListener("keydown", onDown);
+        window.addEventListener("keyup", onUp);
+        window.addEventListener("blur", onBlur);
+        return () => {
+          window.removeEventListener("keydown", onDown);
+          window.removeEventListener("keyup", onUp);
+          window.removeEventListener("blur", onBlur);
+        };
+      }, [onKey]);
 
-        const moving = dx !== 0 || dy !== 0;
+      useEffect(() => {
+        const speed = 1.4;
+        let raf = 0;
+        const tick = () => {
+          const keys = keysRef.current;
+          let dx = 0;
+          let dy = 0;
+          if (keys.has("up")) dy -= 1;
+          if (keys.has("down")) dy += 1;
+          if (keys.has("left")) dx -= 1;
+          if (keys.has("right")) dx += 1;
 
-        if (moving) {
-          // Prefer the most recently pressed axis when both are held equally
-          if (dx !== 0 && dy !== 0) {
-            // diagonal: pick dominant by equal abs → vertical last; fine either way
-            if (Math.abs(dx) >= Math.abs(dy) && Math.abs(dx) > 0) {
-              // keep both for movement, choose facing from larger component
+          const moving = dx !== 0 || dy !== 0;
+          const field = fieldRef.current?.parentElement;
+
+          if (moving) {
+            if (Math.abs(dx) > Math.abs(dy)) {
+              facingRef.current = dx > 0 ? "right" : "left";
+            } else if (dy !== 0) {
+              facingRef.current = dy > 0 ? "down" : "up";
+            } else {
+              facingRef.current = dx > 0 ? "right" : "left";
             }
+
+            const len = Math.hypot(dx, dy) || 1;
+            let { x, y } = posRef.current;
+            x += (dx / len) * speed;
+            y += (dy / len) * speed;
+
+            if (field) {
+              const maxX = Math.max(0, field.clientWidth - FRAME * SCALE);
+              const maxY = Math.max(0, field.clientHeight - FRAME * SCALE);
+              x = Math.max(0, Math.min(maxX, x));
+              y = Math.max(0, Math.min(maxY, y));
+            }
+
+            posRef.current = { x, y };
+            setPos({ x, y });
+
+            const facing = facingRef.current;
+            const state = DIR_STATE[facing];
+            if (!movingRef.current || activeStateRef.current !== state) {
+              activeStateRef.current = state;
+              setDisplay({ mode: "state", state, frame: null });
+            }
+            movingRef.current = true;
+          } else if (movingRef.current) {
+            activeStateRef.current = null;
+            const first = STATES[DIR_STATE[facingRef.current]].frames[0];
+            setDisplay({ mode: "frame", state: null, frame: first });
+            movingRef.current = false;
           }
-          if (Math.abs(dx) > Math.abs(dy)) {
-            this.facing = dx > 0 ? "right" : "left";
-          } else if (dy !== 0) {
-            this.facing = dy > 0 ? "down" : "up";
-          } else {
-            this.facing = dx > 0 ? "right" : "left";
-          }
 
-          const len = Math.hypot(dx, dy) || 1;
-          this.x += (dx / len) * this.speed;
-          this.y += (dy / len) * this.speed;
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+      }, []);
 
-          const field = this.parentElement;
-          if (field) {
-            const maxX = Math.max(0, field.clientWidth - FRAME * 4);
-            const maxY = Math.max(0, field.clientHeight - FRAME * 4);
-            this.x = Math.max(0, Math.min(maxX, this.x));
-            this.y = Math.max(0, Math.min(maxY, this.y));
-          }
-
-          const state = DIR_STATE[this.facing];
-          if (!this.moving || this._activeState !== state) {
-            this._activeState = state;
-            this._sprite.playState(state, { loop: true, fps: 8 });
-          }
-          this.moving = true;
-        } else if (this.moving) {
-          this._activeState = null;
-          this._sprite.showFrame(STATES[DIR_STATE[this.facing]].frames[0]);
-          this.moving = false;
-        }
-
-        this._place();
-      }
-
-      _place() {
-        this.style.transform = `translate(${Math.round(this.x)}px, ${Math.round(this.y)}px)`;
-      }
+      return (
+        <div
+          ref={fieldRef}
+          className="walkable-cat"
+          style={{
+            transform: `translate(${Math.round(pos.x)}px, ${Math.round(pos.y)}px)`,
+          }}
+        >
+          {display.mode === "state" ? (
+            <AnimalSprite sheet={sheet} state={display.state} loop fps={8} />
+          ) : (
+            <AnimalSprite sheet={sheet} frame={display.frame} />
+          )}
+        </div>
+      );
     }
 
-    customElements.define("walkable-cat", WalkableCat);
-
-    function cardWithSprite(sheet, configure, labelText) {
-      const card = document.createElement("div");
-      card.className = "card";
-      const sprite = document.createElement("animal-sprite");
-      sprite.sheet = sheet;
-      configure(sprite);
-      const label = document.createElement("div");
-      label.className = "label";
-      label.textContent = labelText;
-      card.append(sprite, label);
-      return card;
+    function PreviewCard({ children, label }) {
+      return (
+        <div className="card">
+          {children}
+          <div className="label">{label}</div>
+        </div>
+      );
     }
 
-    function applyCat(name) {
-      const { sheet, cursor } = ASSETS[name];
-      document.querySelectorAll("animal-sprite").forEach((el) => {
-        el.sheet = sheet;
-      });
-      const walker = document.getElementById("walker");
-      if (walker) walker.sheet = sheet;
-      const cursorImg = document.getElementById("static-cursor");
-      if (cursorImg) cursorImg.src = cursor;
-    }
-
-    function buildPreviews(name) {
-      const { sheet, cursor } = ASSETS[name];
-      const animGrid = document.getElementById("anim-grid");
-      const staticGrid = document.getElementById("static-grid");
-      animGrid.innerHTML = "";
-      staticGrid.innerHTML = "";
-
-      for (const [key, def] of Object.entries(STATES)) {
-        animGrid.appendChild(
-          cardWithSprite(
-            sheet,
-            (s) => s.playState(key, { loop: true, fps: key.startsWith("walk") ? 8 : 5 }),
-            def.label,
-          ),
-        );
-      }
+    function App() {
+      const [cat, setCat] = useState("aery");
+      const assets = ASSETS[cat];
 
       const statics = [
         ["walkDown", "Down (first)"],
@@ -650,49 +432,98 @@
         ["walkUp", "Up (first)"],
         ["walkLeft", "Left (first)"],
       ];
-      for (const [key, label] of statics) {
-        staticGrid.appendChild(
-          cardWithSprite(sheet, (s) => s.showFrame(STATES[key].frames[0]), label),
-        );
-      }
-
       const sitLast = STATES.sit.frames[STATES.sit.frames.length - 1];
-      staticGrid.appendChild(
-        cardWithSprite(sheet, (s) => s.showFrame(sitLast), "Sit (last)"),
-      );
 
-      const cursorCard = document.createElement("div");
-      cursorCard.className = "card";
-      const cursorImg = document.createElement("img");
-      cursorImg.id = "static-cursor";
-      cursorImg.className = "cursor-icon";
-      cursorImg.src = cursor;
-      cursorImg.alt = `${name} cursor`;
-      cursorImg.width = 16;
-      cursorImg.height = 16;
-      const cursorLabel = document.createElement("div");
-      cursorLabel.className = "label";
-      cursorLabel.textContent = "Cursor";
-      cursorCard.append(cursorImg, cursorLabel);
-      staticGrid.appendChild(cursorCard);
+      return (
+        <>
+          <header>
+            <h1>Making Biscuits — Cat Preview</h1>
+            <div className="selector">
+              <label>Cat</label>
+              <div className="cat-select" role="listbox" aria-label="Select cat">
+                {Object.keys(ASSETS).map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    data-cat={name}
+                    className={cat === name ? "active" : ""}
+                    role="option"
+                    aria-selected={cat === name}
+                    onClick={() => setCat(name)}
+                  >
+                    <img
+                      src={ASSETS[name].cursor}
+                      alt=""
+                      width={16}
+                      height={16}
+                    />
+                    {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </header>
+
+          <main>
+            <section>
+              <h2>Walk around</h2>
+              <div
+                className="playfield"
+                tabIndex={0}
+                onPointerDown={(e) => e.currentTarget.focus()}
+              >
+                <div className="hint">Click here, then Arrow keys or WASD to walk</div>
+                <WalkableCat sheet={assets.sheet} />
+              </div>
+            </section>
+
+            <section>
+              <h2>Animations</h2>
+              <div className="grid">
+                {Object.entries(STATES).map(([key, def]) => (
+                  <PreviewCard key={key} label={def.label}>
+                    <AnimalSprite
+                      sheet={assets.sheet}
+                      state={key}
+                      loop
+                      fps={key.startsWith("walk") ? 8 : 5}
+                    />
+                  </PreviewCard>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h2>Static frames</h2>
+              <div className="grid">
+                {statics.map(([key, label]) => (
+                  <PreviewCard key={key} label={label}>
+                    <AnimalSprite
+                      sheet={assets.sheet}
+                      frame={STATES[key].frames[0]}
+                    />
+                  </PreviewCard>
+                ))}
+                <PreviewCard label="Sit (last)">
+                  <AnimalSprite sheet={assets.sheet} frame={sitLast} />
+                </PreviewCard>
+                <PreviewCard label="Cursor">
+                  <img
+                    className="cursor-icon"
+                    src={assets.cursor}
+                    alt={`${cat} cursor`}
+                    width={16}
+                    height={16}
+                  />
+                </PreviewCard>
+              </div>
+            </section>
+          </main>
+        </>
+      );
     }
 
-    document.getElementById("cat-select").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-cat]");
-      if (!btn) return;
-      document.querySelectorAll("#cat-select button").forEach((b) => {
-        const on = b === btn;
-        b.classList.toggle("active", on);
-        b.setAttribute("aria-selected", on ? "true" : "false");
-      });
-      applyCat(btn.dataset.cat);
-    });
-
-    document.getElementById("playfield").addEventListener("pointerdown", (e) => {
-      e.currentTarget.focus();
-    });
-
-    buildPreviews("aery");
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
